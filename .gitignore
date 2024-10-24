@@ -1,0 +1,63 @@
+# Dependency directories
+node_modules/
+.pnp
+.pnp.js
+
+# Production build
+build/
+
+# Temporary files and output
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+.vscode/
+.idea/
+.DS_Store
+
+# Coverage directory used by testing tools
+coverage/
+
+# Optional npm cache directory
+.npm/
+
+# eslint cache
+.eslintcache
+
+# Typescript cache
+*.tsbuildinfo
+
+# MacOS Finder/Windows/Visual Studio Code specific files
+Thumbs.db
+*.swp
+*.swo
+
+# Parcel-bundler cache (if using Parcel)
+.cache/
+
+# Next.js (if applicable)
+.next/
+out/
+
+# Storybook files
+storybook-static/
+
+# Ignore custom service worker (if applicable)
+public/sw.js
+public/workbox-*.js
+public/worker-*.js
+
+# Prettier
+.prettierignore
