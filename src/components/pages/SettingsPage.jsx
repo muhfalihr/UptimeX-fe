@@ -4,7 +4,7 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen text-gray-300 font-sans">
             <div className="ml-16 p-6">
-                <h2 className="text-2xl font-bold mb-4">Settings</h2>
+                {/* <h2 className="text-2xl font-bold mb-4">Settings</h2> */}
                 <div className="bg-gray-800 rounded-lg p-4">
                     <div className="mb-4">
                         <h3 className="text-xl mb-2">General Settings</h3>

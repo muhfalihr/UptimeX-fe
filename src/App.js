@@ -37,7 +37,6 @@ function App() {
         setPageTitle(title)
     }
 
-    // Render current page based on pageTitle
     const renderPage = () => {
         switch(pageTitle) {
             case "Dashboard":
@@ -52,11 +51,16 @@ function App() {
     }
 
     return (
-        <div className="flex bg-contain bg-slate-600 h-screen w-full overflow-hidden">
+        <div className="flex bg-contain bg-slate-600 h-screen w-full">
             <Sidebar onItemClick={handleItemClick}/>
-            <div className="flex-1 pl-3 h-full overflow-hidden relative">
+            <div className="flex-1 flex flex-col h-screen">
                 <Navbar title={pageTitle}/>
-                {renderPage()}
+                <div className="flex-1 overflow-y-auto p-3 
+                    scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent
+                    hover:scrollbar-thumb-gray-500
+                    dark:scrollbar-thumb-gray-700 dark:hover:scrollbar-thumb-gray-600">
+                    {renderPage()}
+                </div>
             </div>
         </div>
     );
