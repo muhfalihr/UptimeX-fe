@@ -6,7 +6,7 @@ import ServersPage from "./components/pages/ServersPage";
 import SettingsPage from "./components/pages/SettingsPage";
 
 function App() {
-    const wsserversListStatus = "ws://localhost:12833/ws/servers/list/status"
+    const wsserversListStatus = "ws://localhost:12833/ws/servers/list/status";
     const [pageTitle, setPageTitle] = useState("Dashboard");
     const [serverData, setServerData] = useState({
         server_status_list: [],
@@ -51,19 +51,29 @@ function App() {
     }
 
     return (
-        <div className="flex bg-contain bg-slate-600 h-screen w-full">
-            <Sidebar onItemClick={handleItemClick}/>
-            <div className="flex-1 flex flex-col h-screen">
-                <Navbar title={pageTitle}/>
-                <div className="flex-1 overflow-y-auto p-3 
-                    scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent
-                    hover:scrollbar-thumb-gray-500
-                    dark:scrollbar-thumb-gray-700 dark:hover:scrollbar-thumb-gray-600">
-                    {renderPage()}
+        <div className="min-h-screen bg-gray-900 text-gray-100 w-full">
+            <div className="flex">
+                {/* Sidebar positioned as sticky to remain on the side */}
+                <div className="hidden lg:block lg:sticky top-0 h-screen">
+                    <Sidebar onItemClick={handleItemClick} />
+                </div>
+    
+                <div className="flex flex-col min-h-screen w-full">
+                    {/* Navbar positioned sticky at the top */}
+                    <div className="sticky top-0 z-10 w-full">
+                        <Navbar title={pageTitle} />
+                    </div>
+    
+                    {/* Scrollable content section */}
+                    <div className="flex-grow p-4 md:p-8 overflow-y-auto
+                        scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent
+                        hover:scrollbar-thumb-gray-600">
+                        {renderPage()}
+                    </div>
                 </div>
             </div>
         </div>
-    );
+    );    
 }
 
 export default App;

@@ -1,6 +1,24 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Server, Activity } from 'lucide-react';
 import ServerDetailPage from './ServerDetailPage';
+
+// Enhanced Card Component
+const Card = ({ children, className = "", title, icon: Icon }) => (
+    <div className={`bg-gray-800/40 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 
+                     transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 
+                     hover:border-blue-500/30 ${className}`}>
+        {title && (
+            <div className="flex items-center gap-2 mb-4">
+                {Icon && <Icon className="w-5 h-5 text-blue-400" />}
+                <h4 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 
+                              bg-clip-text text-transparent">
+                    {title}
+                </h4>
+            </div>
+        )}
+        {children}
+    </div>
+);
 
 export default function ServersPage({ serverData }) {
     const [selectedServer, setSelectedServer] = useState(null);
@@ -145,12 +163,12 @@ export default function ServersPage({ serverData }) {
             ) : part
         );
     };
-
+    
     return (
-        <div className="min-h-screen text-gray-300 font-sans">
-            <div className="ml-16 p-6">
-                <div className="bg-gray-800 rounded-lg p-4">
-                {selectedServer ? (
+        <div className="min-h-screen bg-gray-900 text-gray-100">
+            <div className="ml-16 p-6 max-w-7xl mx-auto">
+                <Card className="mb-8">
+                    {selectedServer ? (
                         <ServerDetailPage 
                             server={selectedServer}
                             systemInfo={systemInfo}
@@ -161,16 +179,29 @@ export default function ServersPage({ serverData }) {
                         />
                     ) : (
                         <>
-                            {/* Search Bar */}
+                            {/* Enhanced Header */}
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 
+                                             bg-clip-text text-transparent flex items-center gap-2">
+                                    <Server className="w-6 h-6" />
+                                    Server Management
+                                </h2>
+                                <p className="text-gray-400 mt-1">
+                                    Manage and monitor all connected servers
+                                </p>
+                            </div>
+
+                            {/* Enhanced Search Bar */}
                             <div className="mb-6 relative">
                                 <div className={`
-                                    flex items-center gap-2 p-2 
-                                    border-2 rounded-lg transition-all duration-300
+                                    flex items-center gap-2 p-3 
+                                    bg-gray-800/40 backdrop-blur-sm
+                                    border-2 rounded-xl transition-all duration-300
                                     ${isSearchFocused 
                                         ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
-                                        : 'border-gray-700'}
+                                        : 'border-gray-700/50'}
                                 `}>
-                                    <Search className="w-5 h-5 text-gray-400" />
+                                    <Search className="w-5 h-5 text-blue-400" />
                                     <input
                                         type="text"
                                         placeholder="Search servers, labels, or status..."
@@ -193,61 +224,67 @@ export default function ServersPage({ serverData }) {
                                     )}
                                 </div>
                                 
-                                {/* Search Results Counter */}
                                 {searchTerm && (
                                     <div className="absolute right-2 -bottom-6 text-sm text-gray-400">
                                         Found {filteredServers.length} results
                                     </div>
                                 )}
                             </div>
-                            {/* Table */}
-                            <table className="w-full">
-                                <thead>
-                                    <tr>
-                                        <th className="text-left p-2">Server Name</th>
-                                        <th className="text-left p-2">Labels</th>
-                                        <th className="text-left p-2">Status</th>
-                                        <th className="text-left p-2">Last Check</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredServers.map((server, index) => (
-                                        <tr 
-                                            key={index} 
-                                            className="border-t border-gray-700 hover:bg-gray-700/30 transition-colors cursor-pointer"
-                                            onClick={() => handleServerClick(server)}
-                                        >
-                                            <td className="p-2">
-                                                {highlightMatch(server.ip_address || `Server ${index + 1}`, searchTerm)}
-                                            </td>
-                                            <td className="p-2">
-                                                {renderLabels(server.labels)}
-                                            </td>
-                                            <td className="p-2">
-                                                <span className={`px-2 py-1 rounded-full text-sm 
-                                                    ${server.status === 'active' ? 'bg-green-500' : 
-                                                    server.status === 'timeout' ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                                >
-                                                    {highlightMatch(server.status, searchTerm)}
-                                                </span>
-                                            </td>
-                                            <td className="p-2">
-                                                {new Date(serverData.timestamp).toLocaleString()}
-                                            </td>
+
+                            {/* Enhanced Table */}
+                            <div className="overflow-x-auto rounded-xl border border-gray-700/50">
+                                <table className="w-full">
+                                    <thead className="bg-gray-800/40">
+                                        <tr>
+                                            <th className="text-left p-4 text-gray-400 font-medium">Server Name</th>
+                                            <th className="text-left p-4 text-gray-400 font-medium">Labels</th>
+                                            <th className="text-left p-4 text-gray-400 font-medium">Status</th>
+                                            <th className="text-left p-4 text-gray-400 font-medium">Last Check</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-        
-                            {/* No Results Message */}
+                                    </thead>
+                                    <tbody>
+                                        {filteredServers.map((server, index) => (
+                                            <tr 
+                                                key={index} 
+                                                className="border-t border-gray-700/50 hover:bg-gray-700/30 
+                                                         transition-colors cursor-pointer"
+                                                onClick={() => handleServerClick(server)}
+                                            >
+                                                <td className="p-4">
+                                                    {highlightMatch(server.ip_address || `Server ${index + 1}`, searchTerm)}
+                                                </td>
+                                                <td className="p-4">
+                                                    {renderLabels(server.labels)}
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium
+                                                        ${server.status === 'active' ? 'bg-green-500/20 text-green-400' : 
+                                                        server.status === 'timeout' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                                        'bg-red-500/20 text-red-400'}`}
+                                                    >
+                                                        {highlightMatch(server.status, searchTerm)}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-gray-400">
+                                                    {new Date(serverData.timestamp).toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Enhanced No Results Message */}
                             {searchTerm && filteredServers.length === 0 && (
-                                <div className="text-center py-8 text-gray-400">
-                                    No servers found matching "{searchTerm}"
+                                <div className="text-center py-12 text-gray-400 bg-gray-800/20 
+                                              rounded-xl border border-gray-700/50 mt-4">
+                                    <Search className="w-12 h-12 mx-auto mb-3 text-gray-500" />
+                                    <p>No servers found matching "{searchTerm}"</p>
                                 </div>
                             )}
                         </>
                     )}
-                </div>
+                </Card>
             </div>
         </div>
     );

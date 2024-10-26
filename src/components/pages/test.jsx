@@ -96,38 +96,16 @@ export default function ServerDetailPage({
 
         const { count, unit } = intervals[range];
         
-        // Use network info data if available, otherwise generate mock data
-        if (networkInfo && networkInfo.network_info.interfaces) {
-            const interfaces = Object.values(networkInfo.network_info.interfaces)
-                .filter(info => info.is_up);
-            
-            for (let i = count - 1; i >= 0; i--) {
-                const time = new Date(now - i * getMillisecondsForUnit(unit));
-                const totalSent = interfaces.reduce((acc, inf) => acc + inf.bytes_sent, 0);
-                const totalReceived = interfaces.reduce((acc, inf) => acc + inf.bytes_recv, 0);
-                const baseMultiplier = (count - i) / count; // For simulation of historical data
-
-                data.push({
-                    timestamp: time.toISOString(),
-                    'Bytes Sent (MB)': Number(((totalSent / 1024 / 1024) * baseMultiplier).toFixed(2)),
-                    'Bytes Received (MB)': Number(((totalReceived / 1024 / 1024) * baseMultiplier).toFixed(2)),
-                    'Packets Sent': Math.floor(interfaces.reduce((acc, inf) => acc + inf.packets_sent, 0) * baseMultiplier),
-                    'Packets Received': Math.floor(interfaces.reduce((acc, inf) => acc + inf.packets_recv, 0) * baseMultiplier)
-                });
-            }
-        } else {
-            // Fallback to mock data if no network info
-            for (let i = count - 1; i >= 0; i--) {
-                const time = new Date(now - i * getMillisecondsForUnit(unit));
-                const baseValue = Math.random() * 100;
-                data.push({
-                    timestamp: time.toISOString(),
-                    'Bytes Sent (MB)': Number((baseValue + Math.random() * 20).toFixed(2)),
-                    'Bytes Received (MB)': Number((baseValue + Math.random() * 30).toFixed(2)),
-                    'Packets Sent': Math.floor(baseValue * 100),
-                    'Packets Received': Math.floor(baseValue * 120)
-                });
-            }
+        for (let i = count - 1; i >= 0; i--) {
+            const time = new Date(now - i * getMillisecondsForUnit(unit));
+            const baseValue = Math.random() * 100;
+            data.push({
+                timestamp: time.toISOString(),
+                'Bytes Sent (MB)': Number((baseValue + Math.random() * 20).toFixed(2)),
+                'Bytes Received (MB)': Number((baseValue + Math.random() * 30).toFixed(2)),
+                'Packets Sent': Math.floor(baseValue * 100),
+                'Packets Received': Math.floor(baseValue * 120)
+            });
         }
         return data;
     };
@@ -142,6 +120,8 @@ export default function ServerDetailPage({
         };
         return units[unit];
     };
+
+    const timeSeriesData = generateTimeSeriesData(timeRange);
 
     const formatXAxis = (timestamp) => {
         const date = new Date(timestamp);
@@ -160,8 +140,6 @@ export default function ServerDetailPage({
         }
     };
 
-    const timeSeriesData = generateTimeSeriesData(timeRange);
-
     const COLORS = ['#60A5FA', '#34D399', '#FBBF24'];
     const GRADIENTS = {
         bytesSent: ['#3B82F6', '#1D4ED8'],
@@ -170,27 +148,10 @@ export default function ServerDetailPage({
         packetsReceived: ['#EC4899', '#BE185D']
     };
 
-    // Calculate total traffic data for pie chart
-    const totalTrafficData = [
-        { 
-            name: 'Bytes Sent', 
-            value: timeSeriesData.reduce((acc, curr) => acc + curr['Bytes Sent (MB)'], 0) 
-        },
-        { 
-            name: 'Bytes Received', 
-            value: timeSeriesData.reduce((acc, curr) => acc + curr['Bytes Received (MB)'], 0) 
-        },
-        { 
-            name: 'Other Traffic', 
-            value: timeSeriesData.reduce((acc, curr) => 
-                acc + (curr['Packets Sent'] + curr['Packets Received']) * 0.1, 0) 
-        }
-    ];
-
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100">
             <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Header */}
+                {/* Header section remains the same */}
                 <div className="flex items-center gap-4 mb-8 bg-gray-800/40 p-4 rounded-xl border border-gray-700/50">
                     <button
                         onClick={onBack}
@@ -208,14 +169,13 @@ export default function ServerDetailPage({
                     </div>
                 </div>
 
-                {/* Loading State */}
+                {/* Loading and Error states remain the same */}
                 {isLoading && (
                     <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
                     </div>
                 )}
 
-                {/* Error State */}
                 {error && (
                     <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-6 mb-8">
                         <p className="text-red-400 flex items-center gap-2">
@@ -225,7 +185,7 @@ export default function ServerDetailPage({
                     </div>
                 )}
 
-                {/* System Information */}
+                {/* System Information section remains the same */}
                 {systemInfo && (
                     <div className="mb-8">
                         <Card title="System Information" icon={Server}>
@@ -247,7 +207,7 @@ export default function ServerDetailPage({
                     </div>
                 )}
 
-                {/* Network Dashboard */}
+                {/* Network Dashboard with time-based charts */}
                 {networkInfo && (
                     <div className="space-y-6">
                         <h3 className="text-xl font-bold flex items-center gap-2 text-blue-400">
@@ -337,128 +297,44 @@ export default function ServerDetailPage({
                                 </div>
                             </Card>
 
+                            {/* Keep the Total Traffic Distribution pie chart */}
                             <Card title="Total Traffic Distribution" icon={Activity}>
                                 <div className="h-96">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
-                                            <Tooltip content={<CustomTooltip />} />
                                             <Pie
-                                                data={totalTrafficData}
+                                                data={[
+                                                    { name: 'Bytes Sent', value: timeSeriesData.reduce((acc, curr) => acc + curr['Bytes Sent (MB)'], 0) },
+                                                    { name: 'Bytes Received', value: timeSeriesData.reduce((acc, curr) => acc + curr['Bytes Received (MB)'], 0) }
+                                                ]}
+                                                dataKey="value"
+                                                nameKey="name"
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={60}
                                                 outerRadius={120}
-                                                fill="#8884d8"
+                                                innerRadius={60}
+                                                label
                                                 paddingAngle={5}
-                                                dataKey="value"
-                                                label={({
-                                                    cx,
-                                                    cy,
-                                                    midAngle,
-                                                    innerRadius,
-                                                    outerRadius,
-                                                    value,
-                                                    index
-                                                }) => {
-                                                    const RADIAN = Math.PI / 180;
-                                                    const radius = 25 + innerRadius + (outerRadius - innerRadius);
-                                                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                                                    return (
-                                                        <text
-                                                            x={x}
-                                                            y={y}
-                                                            fill={COLORS[index % COLORS.length]}
-                                                            textAnchor={x > cx ? 'start' : 'end'}
-                                                            dominantBaseline="central"
-                                                            className="text-sm"
-                                                        >
-                                                            {totalTrafficData[index].name} ({value.toFixed(2)}%)
-                                                        </text>
-                                                    );
-                                                }}
                                             >
-                                                {totalTrafficData.map((entry, index) => (
+                                                {COLORS.map((color, index) => (
                                                     <Cell 
-                                                        key={`cell-${index}`}
-                                                        fill={COLORS[index % COLORS.length]}
+                                                        key={`cell-${index}`} 
+                                                        fill={color}
                                                     />
                                                 ))}
                                             </Pie>
-                                            <Legend 
-                                                verticalAlign="bottom" 
-                                                height={36}
-                                                content={({ payload }) => (
-                                                    <div className="flex justify-center gap-4">
-                                                        {payload.map((entry, index) => (
-                                                            <div 
-                                                                key={`legend-${index}`}
-                                                                className="flex items-center gap-2"
-                                                            >
-                                                                <div 
-                                                                    className="w-3 h-3 rounded-full"
-                                                                    style={{ backgroundColor: entry.color }}
-                                                                />
-                                                                <span className="text-sm text-gray-300">
-                                                                    {entry.value}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            />
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Legend />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
                             </Card>
                         </div>
 
-                        {/* Network Interfaces Summary */}
-                        {networkInfo.network_info.interfaces && (
-                            <Card title="Network Interfaces" icon={Network}>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {Object.entries(networkInfo.network_info.interfaces)
-                                        .filter(([_, info]) => info.is_up)
-                                        .map(([name, info]) => (
-                                            <div 
-                                                key={name}
-                                                className="bg-gray-700/20 p-4 rounded-lg border border-gray-700/50
-                                                         hover:border-blue-500/30 transition-colors"
-                                            >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h5 className="font-medium text-blue-400">{name}</h5>
-                                                    <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs">
-                                                        Active
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-1 text-sm">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">MAC Address</span>
-                                                        <span className="text-gray-200">{info.mac_address}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">IP Address</span>
-                                                        <span className="text-gray-200">{info.ip_address}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Bytes Sent</span>
-                                                        <span className="text-gray-200">
-                                                            {(info.bytes_sent / 1024 / 1024).toFixed(2)} MB
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Bytes Received</span>
-                                                        <span className="text-gray-200">
-                                                            {(info.bytes_recv / 1024 / 1024).toFixed(2)} MB
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            </Card>
-                        )}
+                        <div className="text-sm text-gray-400 flex items-center gap-2">
+                            <Activity className="w-4 h-4" />
+                            Last Updated: {new Date().toLocaleString()}
+                        </div>
                     </div>
                 )}
             </div>

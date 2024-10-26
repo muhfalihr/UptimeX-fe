@@ -10,11 +10,27 @@ export default function StatusesCard({ serverData }) {
     };
 
     return (
-        <div className="h-[8rem] grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <StatusCard title="active servers" count={statusCounts.active} color="bg-green-500" />
-            <StatusCard title="timeout servers" count={statusCounts.timeout} color="bg-yellow-500" />
-            <StatusCard title="inaccessible servers" count={statusCounts.inaccessible} color="bg-red-500" />
-            <StatusCard title="total servers" count={statusCounts.total} color="" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <StatusCard 
+                title="Active Servers" 
+                count={statusCounts.active} 
+                color="bg-green-500" 
+            />
+            <StatusCard 
+                title="Timeout Servers" 
+                count={statusCounts.timeout} 
+                color="bg-yellow-500" 
+            />
+            <StatusCard 
+                title="Inaccessible Servers" 
+                count={statusCounts.inaccessible} 
+                color="bg-red-500" 
+            />
+            <StatusCard 
+                title="Total Servers" 
+                count={statusCounts.total} 
+                color="bg-blue-500" 
+            />
         </div>
     );
 }
