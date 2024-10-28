@@ -1,50 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import { Activity } from 'lucide-react';
+import { useServerData } from '../../context/ServerContext';
 
-const generateTimestamps = (startTime, intervalMinutes, points) => {
-    const timestamps = [];
-    let currentTime = new Date(startTime);
-    currentTime.setHours(currentTime.getHours() - 12);
-    
-    for (let i = 0; i < points; i++) {
-        const hours = currentTime.getHours().toString().padStart(2, '0');
-        const minutes = currentTime.getMinutes().toString().padStart(2, '0');
-        timestamps.push(`${hours}:${minutes}`);
-        currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
-    }
-    
-    return timestamps;
-};
+export default function ServerInfoChart() {
+    const { serverData, historicalData } = useServerData();
+    const { activeServers, timeoutServers, unaccessibleServers, timestamps } = historicalData;
 
-const TOTAL_POINTS = (12 * 60) / 30;
-
-export default function ServerInfoChart({ serverData }) {
-    const [activeServers, setActiveServers] = useState(new Array(TOTAL_POINTS).fill(0));
-    const [timeoutServers, setTimeoutServers] = useState(new Array(TOTAL_POINTS).fill(0));
-    const [unaccessibleServers, setUnaccessibleServers] = useState(new Array(TOTAL_POINTS).fill(0));
-    const [timestampLabels, setTimestampLabels] = useState(generateTimestamps(Date.now(), 30, TOTAL_POINTS));
-
-    useEffect(() => {
-        if (serverData.server_status_list.length > 0) {
-            const activeCount = serverData.server_status_list.filter(server => server.status === 'active').length;
-            const timeoutCount = serverData.server_status_list.filter(server => server.status === 'timeout').length;
-            const unaccessibleCount = serverData.server_status_list.filter(server => server.status === 'unaccessible').length;
-
-            setActiveServers(prev => [...prev.slice(1), activeCount]);
-            setTimeoutServers(prev => [...prev.slice(1), timeoutCount]);
-            setUnaccessibleServers(prev => [...prev.slice(1), unaccessibleCount]);
-            
-            if (serverData.timestamp) {
-                const newTime = new Date(serverData.timestamp).toLocaleTimeString();
-                setTimestampLabels(prev => [...prev.slice(1), newTime]);
-            }
-        }
-    }, [serverData]);
-
-    const data = {
-        labels: timestampLabels,
+    const data = useMemo(() => ({
+        labels: timestamps,
         datasets: [
             {
                 label: 'Active Servers',
@@ -71,9 +36,9 @@ export default function ServerInfoChart({ serverData }) {
                 tension: 0.4,
             },
         ],
-    };
+    }), [timestamps, activeServers, timeoutServers, unaccessibleServers]);
 
-    const options = {
+    const options = useMemo(() => ({
         maintainAspectRatio: false,
         scales: {
             y: {
@@ -136,7 +101,7 @@ export default function ServerInfoChart({ serverData }) {
                 borderWidth: 1,
             },
         },
-    };
+    }), []);
 
     return (
         <div className="w-full mx-auto mt-8 mb-8">

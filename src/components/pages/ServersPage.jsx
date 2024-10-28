@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, X, Server, Activity } from 'lucide-react';
+import { Search, X, Server } from 'lucide-react';
 import ServerDetailPage from './ServerDetailPage';
+import { useServerData } from '../../context/ServerContext';
 
-// Enhanced Card Component
 const Card = ({ children, className = "", title, icon: Icon }) => (
     <div className={`bg-gray-800/40 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 
                      transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 
                      hover:border-blue-500/30 ${className}`}>
         {title && (
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-4">
                 {Icon && <Icon className="w-5 h-5 text-blue-400" />}
                 <h4 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 
                               bg-clip-text text-transparent">
@@ -20,13 +20,14 @@ const Card = ({ children, className = "", title, icon: Icon }) => (
     </div>
 );
 
-export default function ServersPage({ serverData }) {
+export default function ServersPage() {
     const [selectedServer, setSelectedServer] = useState(null);
     const [systemInfo, setSystemInfo] = useState(null);
     const [networkInfo, setNetworkInfo] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const { serverData } = useServerData();
     const [error, setError] = useState(null);
     const wsRef = useRef(null);
 
@@ -165,9 +166,9 @@ export default function ServersPage({ serverData }) {
     };
     
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-100">
-            <div className="ml-16 p-6 max-w-7xl mx-auto">
-                <Card className="mb-8">
+        <div className="w-full bg-gray-900 text-gray-100">
+            <div className="w-full max-w-7xl mx-auto">
+                <Card className="w-full mb-8">
                     {selectedServer ? (
                         <ServerDetailPage 
                             server={selectedServer}
