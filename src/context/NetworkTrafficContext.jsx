@@ -10,14 +10,14 @@ const generateTimestamps = (startTime, intervalMinutes, points) => {
     const timestamps = [];
     let currentTime = new Date(startTime);
     currentTime.setHours(currentTime.getHours() - 12);
-    
+
     for (let i = 0; i < points; i++) {
         const hours = currentTime.getHours().toString().padStart(2, '0');
         const minutes = currentTime.getMinutes().toString().padStart(2, '0');
         timestamps.push(`${hours}:${minutes}`);
         currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
     }
-    
+
     return timestamps;
 };
 
@@ -30,59 +30,66 @@ const loadHistoricalData = () => {
     } catch (error) {
         console.error('Error loading historical data:', error);
     }
-    
+
     return {
-        activeServers: new Array(TOTAL_POINTS).fill(0),
-        timeoutServers: new Array(TOTAL_POINTS).fill(0),
-        unaccessibleServers: new Array(TOTAL_POINTS).fill(0),
+        bytesSent: 0,
+        bytesRecv: 0,
+        packetsSent: 0,
+        packetsRecv: 0,
+        errin: 0,
+        errout: 0,
+        dropin: 0,
+        dropout: 0,
+        fifoin: 0,
+        fifoout: 0,
         timestamps: generateTimestamps(Date.now(), 30, TOTAL_POINTS),
         lastUpdate: Date.now()
     };
 };
 
-export const ServerContext = createContext(undefined);
+export const NetworkTrafficContext = createContext(undefined);
 
-export const ServerProvider = ({ children }) => {
-    const [serverData, setServerData] = useState({
-        server_status_list: [],
-        timestamp: Date.now()
-    });
+export const NetworkTrafficProvider = ({ children, ipAddress }) => {
     const [historicalData, setHistoricalData] = useState(loadHistoricalData);
+    const [networkTrafficData, setNetworkTrafficData] = useState([]);
     const [isConnected, setIsConnected] = useState(false);
 
     const socketRef = useRef(null);
     const lastUpdateRef = useRef(historicalData.lastUpdate);
 
-    const wsServerStatusUrl = useMemo(() => "ws://localhost:12833/ws/servers/list/status", []);
+    const wsNetworkTrafficUrl = useMemo(() => `ws://${ipAddress}:33551/ws/network/iocounters/all`, [ipAddress]);
 
     const updateHistoricalData = useCallback((data) => {
         const now = Date.now();
         if (now - lastUpdateRef.current < UPDATE_INTERVAL) return;
 
-        if (data.server_status_list && data.server_status_list.length > 0) {
-            const activeCount = data.server_status_list.filter(server => server.status === 'active').length;
-            const timeoutCount = data.server_status_list.filter(server => server.status === 'timeout').length;
-            const unaccessibleCount = data.server_status_list.filter(server => server.status === 'unaccessible').length;
-            const newTime = new Date(data.timestamp).toLocaleTimeString();
-
-            setHistoricalData(() => ({
-                activeServers: activeCount,
-                timeoutServers: timeoutCount,
-                unaccessibleServers: unaccessibleCount,
-                timestamps: newTime,
-                lastUpdate: now
-            }));
-            lastUpdateRef.current = now;
-        }
+        const latestData = data[0]; // Mengambil data pertama dari array yang diterima
+    
+        // Update nilai integer dari historicalData
+        setHistoricalData(() => ({
+            bytesSent: latestData.bytesSent,
+            bytesRecv: latestData.bytesRecv,
+            packetsSent: latestData.packetsSent,
+            packetsRecv: latestData.packetsRecv,
+            errin: latestData.errin,
+            errout: latestData.errout,
+            dropin: latestData.dropin,
+            dropout: latestData.dropout,
+            fifoin: latestData.fifoin,
+            fifoout: latestData.fifoout,
+            timestamps: new Date(latestData.timestamp).toLocaleTimeString(),
+            lastUpdate: now
+        }));
+        lastUpdateRef.current = now;
     }, []);
-
+    
     const connectWebSocket = useCallback(() => {
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
             return;
         }
 
-        socketRef.current = new WebSocket(wsServerStatusUrl);
-        
+        socketRef.current = new WebSocket(wsNetworkTrafficUrl);
+
         socketRef.current.onopen = () => {
             console.log("WebSocket connection established");
             setIsConnected(true);
@@ -91,8 +98,8 @@ export const ServerProvider = ({ children }) => {
         socketRef.current.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                setServerData(data);
-                updateHistoricalData(data);
+                setNetworkTrafficData(data); // Menyimpan data yang diterima
+                updateHistoricalData(data);   // Memperbarui data historis
             } catch (error) {
                 console.error("Error parsing WebSocket message:", error);
             }
@@ -109,7 +116,7 @@ export const ServerProvider = ({ children }) => {
             setIsConnected(false);
             setTimeout(connectWebSocket, RECONNECT_DELAY);
         };
-    }, [wsServerStatusUrl, updateHistoricalData]);
+    }, [wsNetworkTrafficUrl, updateHistoricalData]);
 
     useEffect(() => {
         connectWebSocket();
@@ -133,14 +140,14 @@ export const ServerProvider = ({ children }) => {
     }, [historicalData]);
 
     const contextValue = useMemo(() => ({
-        serverData,
+        networkTrafficData,
         historicalData,
         isConnected
-    }), [serverData, historicalData, isConnected]);
+    }), [networkTrafficData, historicalData, isConnected]);
 
     return (
-        <ServerContext.Provider value={contextValue}>
+        <NetworkTrafficContext.Provider value={contextValue}>
             {children}
-        </ServerContext.Provider>
+        </NetworkTrafficContext.Provider>
     );
 };

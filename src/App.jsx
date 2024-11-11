@@ -1,29 +1,19 @@
 import React, { useState } from "react";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
-import DashboardPage from "./components/pages/DashboardPage";
-import ServersPage from "./components/pages/ServersPage";
-import SettingsPage from "./components/pages/SettingsPage";
+import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
+import Navbar from "./components/layout/Navbar/Navbar";
+import Sidebar from "./components/layout/Sidebar/Sidebar";
+import DashboardPage from "./pages/dashboard/Dashboard";
+import ServersPage from "./pages/servers/Servers";
+import SettingsPage from "./pages/settings/Settings";
 import { ServerProvider } from "./context/ServerContext";
 
 function AppContent() {
+    const navigate = useNavigate(); // Use useNavigate for navigation
     const [pageTitle, setPageTitle] = useState("Dashboard");
 
     const handleItemClick = (title) => {
         setPageTitle(title);
-    };
-
-    const renderPage = () => {
-        switch(pageTitle) {
-            case "Dashboard":
-                return <DashboardPage />;
-            case "Servers":
-                return <ServersPage />;
-            case "Settings":
-                return <SettingsPage />;
-            default:
-                return <DashboardPage />;
-        }
+        navigate(`/${title.toLowerCase()}`); // Navigate based on title
     };
 
     return (
@@ -41,7 +31,12 @@ function AppContent() {
                     <div className="flex justify-center p-4 md:p-8 overflow-y-auto
                         scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent
                         hover:scrollbar-thumb-gray-600">
-                        {renderPage()}
+                        <Routes>
+                            <Route path="/dashboard" element={<DashboardPage />} />
+                            <Route path="/servers" element={<ServersPage />} />
+                            <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="*" element={<DashboardPage />} />
+                        </Routes>
                     </div>
                 </div>
             </div>
@@ -51,9 +46,11 @@ function AppContent() {
 
 function App() {
     return (
-        <ServerProvider>
-            <AppContent />
-        </ServerProvider>
+        <Router>
+            <ServerProvider>
+                <AppContent />
+            </ServerProvider>
+        </Router>
     );
 }
 

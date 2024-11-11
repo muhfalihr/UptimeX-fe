@@ -77,26 +77,26 @@ const ServersManagement = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [connectionStatus, setConnectionStatus] = useState({});
+  // const [connectionStatus, setConnectionStatus] = useState({});
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    fetchIpAddresses();
-    // Initialize WebSocket connection for real-time status updates
-    const ws = new WebSocket('ws://your-backend-url/ws');
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setConnectionStatus(prevStatus => ({
-        ...prevStatus,
-        [data.ip_address]: data.status
-      }));
-    };
-    return () => ws.close();
-  }, []);
+  // useEffect(() => {
+  //   fetchIpAddresses();
+  //   // Initialize WebSocket connection for real-time status updates
+  //   const ws = new WebSocket('ws://your-backend-url/ws');
+  //   ws.onmessage = (event) => {
+  //     const data = JSON.parse(event.data);
+  //     setConnectionStatus(prevStatus => ({
+  //       ...prevStatus,
+  //       [data.ip_address]: data.status
+  //     }));
+  //   };
+  //   return () => ws.close();
+  // }, []);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-  };
+  // const showToast = (message, type = 'success') => {
+  //   setToast({ message, type });
+  // };
 
   const validateIp = (ip) => {
     const ipRegex = /^(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/;
@@ -411,6 +411,7 @@ const ServersManagement = () => {
               setLoading(true);
               const formData = new FormData();
               formData.append('id', deleteConfirm.id);
+              formData.append('ip_address', deleteConfirm.ip_address);
               const response = await fetch(`http://localhost:12834/settings/server_management/delete`, {
                 method: 'DELETE',
                 body: formData

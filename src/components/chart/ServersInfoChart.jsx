@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import { Activity } from 'lucide-react';
-import { useServerData } from '../../context/ServerContext';
+import { useServerData } from '../../hooks/useServerData';
 
 export default function ServerInfoChart() {
     const { serverData, historicalData } = useServerData();

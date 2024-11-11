@@ -80,6 +80,7 @@ export default function ServerDetailPage({
     error, 
     onBack 
 }) {
+    console.log(`Data IO Counters = ${JSON.stringify(networkInfo)}`);
     const [timeRange, setTimeRange] = useState('1h');
 
     // Generate time-series data for the selected range
@@ -97,26 +98,41 @@ export default function ServerDetailPage({
         const { count, unit } = intervals[range];
         
         // Use network info data if available, otherwise generate mock data
-        if (networkInfo && networkInfo.network_info.interfaces) {
-            const interfaces = Object.values(networkInfo.network_info.interfaces)
-                .filter(info => info.is_up);
+        if (networkInfo && networkInfo.io_counters) {
+            // Mengambil semua interface dari io_counters
+            const interfaces = Object.values(networkInfo.io_counters);
             
             for (let i = count - 1; i >= 0; i--) {
                 const time = new Date(now - i * getMillisecondsForUnit(unit));
-                const totalSent = interfaces.reduce((acc, inf) => acc + inf.bytes_sent, 0);
-                const totalReceived = interfaces.reduce((acc, inf) => acc + inf.bytes_recv, 0);
-                const baseMultiplier = (count - i) / count; // For simulation of historical data
-
+                const baseMultiplier = (count - i) / count; // Untuk simulasi data historis
+    
+                // Menghitung total untuk semua interface
+                const totalSent = interfaces.reduce((acc, inf) => {
+                    return acc + (inf.bytes_sent || 0);
+                }, 0);
+                
+                const totalReceived = interfaces.reduce((acc, inf) => {
+                    return acc + (inf.bytes_recv || 0);
+                }, 0);
+                
+                const totalPacketsSent = interfaces.reduce((acc, inf) => {
+                    return acc + (inf.packets_sent || 0);
+                }, 0);
+                
+                const totalPacketsReceived = interfaces.reduce((acc, inf) => {
+                    return acc + (inf.packets_recv || 0);
+                }, 0);
+    
                 data.push({
                     timestamp: time.toISOString(),
                     'Bytes Sent (MB)': Number(((totalSent / 1024 / 1024) * baseMultiplier).toFixed(2)),
                     'Bytes Received (MB)': Number(((totalReceived / 1024 / 1024) * baseMultiplier).toFixed(2)),
-                    'Packets Sent': Math.floor(interfaces.reduce((acc, inf) => acc + inf.packets_sent, 0) * baseMultiplier),
-                    'Packets Received': Math.floor(interfaces.reduce((acc, inf) => acc + inf.packets_recv, 0) * baseMultiplier)
+                    'Packets Sent': Math.floor(totalPacketsSent * baseMultiplier),
+                    'Packets Received': Math.floor(totalPacketsReceived * baseMultiplier)
                 });
             }
         } else {
-            // Fallback to mock data if no network info
+            // Data mock jika tidak ada network info
             for (let i = count - 1; i >= 0; i--) {
                 const time = new Date(now - i * getMillisecondsForUnit(unit));
                 const baseValue = Math.random() * 100;
@@ -226,23 +242,63 @@ export default function ServerDetailPage({
                 )}
 
                 {/* System Information */}
+                {/* Replace the existing system information rendering code with this */}
                 {systemInfo && (
                     <div className="mb-8">
                         <Card title="System Information" icon={Server}>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {Object.entries(systemInfo.system_info).map(([key, value]) => (
-                                    <div 
-                                        key={key}
-                                        className="bg-gray-700/20 p-4 rounded-lg border border-gray-700/50
-                                                 hover:border-blue-500/30 transition-colors"
-                                    >
-                                        <div className="text-sm text-gray-400 mb-1">
-                                            {key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')}
-                                        </div>
-                                        <div className="font-medium text-white">{value}</div>
-                                    </div>
-                                ))}
+                                {Object.entries(systemInfo)
+                                    .filter(([key]) => key !== 'users') // Exclude users from first render
+                                    .map(([key, value]) => {
+                                        // Existing code for rendering system info remains the same
+                                        let displayValue = value;
+                                        if (key === 'uptime' || key === 'boot_time') {
+                                            displayValue = new Date(value * 1000).toLocaleString();
+                                        }
+
+                                        return (
+                                            <div 
+                                                key={key}
+                                                className="bg-gray-700/20 p-4 rounded-lg border border-gray-700/50 hover:border-blue-500/30 transition-colors"
+                                            >
+                                                <div className="text-sm text-gray-400 mb-1">
+                                                    {key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')}
+                                                </div>
+                                                <div className="font-medium text-white">{displayValue}</div>
+                                            </div>
+                                        );
+                                    })
+                                }
                             </div>
+
+                            {/* Add users table to the same card */}
+                            {systemInfo.users && systemInfo.users.length > 0 && (
+                                <div className="mt-6 bg-gray-700/20 p-4 rounded-lg border border-gray-700/50 hover:border-blue-500/30 transition-colors">
+                                    <div className="text-sm text-gray-400 mb-3">
+                                        Users
+                                    </div>
+                                    <table className="min-w-full divide-y divide-gray-700">
+                                        <thead>
+                                            <tr>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Terminal</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Host</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Started</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-gray-700 divide-y divide-gray-600">
+                                            {systemInfo.users.map((user, index) => (
+                                                <tr key={index}>
+                                                    <td className="px-4 py-2 text-white">{user.user}</td>
+                                                    <td className="px-4 py-2 text-white">{user.terminal}</td>
+                                                    <td className="px-4 py-2 text-white">{user.host}</td>
+                                                    <td className="px-4 py-2 text-white">{new Date(user.started * 1000).toLocaleString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </Card>
                     </div>
                 )}
@@ -254,7 +310,7 @@ export default function ServerDetailPage({
                             <Network className="w-6 h-6" />
                             Network Information
                         </h3>
-                        
+{/*                         
                         <Card title="Network Traffic Over Time" icon={Clock}>
                             <TimeRangeSelector selectedRange={timeRange} onRangeChange={setTimeRange} />
                             <div className="h-96">
@@ -298,10 +354,10 @@ export default function ServerDetailPage({
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
-                        </Card>
+                        </Card> */}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card title="Packet Traffic Over Time" icon={Database}>
+                            {/* <Card title="Packet Traffic Over Time" icon={Database}>
                                 <div className="h-96">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={timeSeriesData}>
@@ -335,9 +391,9 @@ export default function ServerDetailPage({
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
-                            </Card>
+                            </Card> */}
 
-                            <Card title="Total Traffic Distribution" icon={Activity}>
+                            {/* <Card title="Total Traffic Distribution" icon={Activity}>
                                 <div className="h-96">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
@@ -411,55 +467,68 @@ export default function ServerDetailPage({
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
-                            </Card>
+                            </Card> */}
                         </div>
-
-                        {/* Network Interfaces Summary */}
-                        {networkInfo.network_info.interfaces && (
-                            <Card title="Network Interfaces" icon={Network}>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {Object.entries(networkInfo.network_info.interfaces)
-                                        .filter(([_, info]) => info.is_up)
-                                        .map(([name, info]) => (
-                                            <div 
-                                                key={name}
-                                                className="bg-gray-700/20 p-4 rounded-lg border border-gray-700/50
-                                                         hover:border-blue-500/30 transition-colors"
-                                            >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h5 className="font-medium text-blue-400">{name}</h5>
-                                                    <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs">
-                                                        Active
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-1 text-sm">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">MAC Address</span>
-                                                        <span className="text-gray-200">{info.mac_address}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">IP Address</span>
-                                                        <span className="text-gray-200">{info.ip_address}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Bytes Sent</span>
-                                                        <span className="text-gray-200">
-                                                            {(info.bytes_sent / 1024 / 1024).toFixed(2)} MB
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Bytes Received</span>
-                                                        <span className="text-gray-200">
-                                                            {(info.bytes_recv / 1024 / 1024).toFixed(2)} MB
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            </Card>
-                        )}
                     </div>
+                )}
+
+                {networkInfo.io_counters && (
+                    <Card title="Network Interfaces" icon={Network}>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {Object.entries(networkInfo.io_counters).map(([name, info]) => (
+                                <div 
+                                    key={name}
+                                    className="bg-gray-700/20 p-4 rounded-lg border border-gray-700/50
+                                                hover:border-blue-500/30 transition-colors"
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h5 className="font-medium text-blue-400">{name}</h5>
+                                        <span className={`px-2 py-1 rounded-full text-xs ${
+                                        info.bytes_sent > 0 || info.bytes_recv > 0 
+                                            ? 'bg-green-500/20 text-green-400'
+                                            : 'bg-gray-500/20 text-gray-400'
+                                        }`}>
+                                            {info.bytes_sent > 0 || info.bytes_recv > 0 ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Bytes Sent</span>
+                                            <span className="text-gray-200">
+                                                {(info.bytes_sent / 1024 / 1024).toFixed(2)} MB
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Bytes Received</span>
+                                            <span className="text-gray-200">
+                                                {(info.bytes_recv / 1024 / 1024).toFixed(2)} MB
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Packets Sent</span>
+                                            <span className="text-gray-200">
+                                                {info.packets_sent.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Packets Received</span>
+                                            <span className="text-gray-200">
+                                                {info.packets_recv.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        {(info.errin > 0 || info.errout > 0) && (
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Errors</span>
+                                            <span className="text-red-400">
+                                                In: {info.errin} | Out: {info.errout}
+                                            </span>
+                                        </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
                 )}
             </div>
         </div>

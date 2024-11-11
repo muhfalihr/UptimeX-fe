@@ -164,7 +164,7 @@ export default function ServersPage() {
             ) : part
         );
     };
-    
+
     return (
         <div className="w-full bg-gray-900 text-gray-100">
             <div className="w-full max-w-7xl mx-auto">
@@ -173,7 +173,7 @@ export default function ServersPage() {
                         <ServerDetailPage 
                             server={selectedServer}
                             systemInfo={systemInfo}
-                            networkInfo={networkInfo}
+                            networkInfo={networkInterfacesInfo}
                             isLoading={isLoading}
                             error={error}
                             onBack={handleBack}

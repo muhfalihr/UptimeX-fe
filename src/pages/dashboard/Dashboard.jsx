@@ -1,8 +1,8 @@
 import React from 'react';
 import { Layout, Activity } from 'lucide-react';
-import StatusesCard from '../StatusCard/StatusesCard';
-import ServerInfoChart from '../ServersInfoChart/ServersInfoChart';
-import { useServerData } from '../../context/ServerContext';
+import StatusesCard from '../../components/common/Card/StatusesCard';
+import ServerInfoChart from '../../components/chart/ServersInfoChart';
+import { useServerData } from '../../hooks/useServerData';
 
 const Card = ({ children, className = "", title, icon: Icon }) => (
     <div className={`bg-gray-800/40 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 

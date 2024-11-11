@@ -1,11 +1,12 @@
-import React, { createContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 
 // Konstanta konfigurasi
-const TOTAL_POINTS = (12 * 60) / 30;
+const TOTAL_POINTS = (12 * 60) / 30; // 24 point untuk 12 jam dengan interval 30 menit
 const STORAGE_KEY = 'server_historical_data';
-const UPDATE_INTERVAL = 30000;
-const RECONNECT_DELAY = 5000;
+const UPDATE_INTERVAL = 30000; // 30 detik
+const RECONNECT_DELAY = 5000; // 5 detik delay untuk reconnect
 
+// Fungsi utilitas untuk menghasilkan timestamp
 const generateTimestamps = (startTime, intervalMinutes, points) => {
     const timestamps = [];
     let currentTime = new Date(startTime);
@@ -21,6 +22,7 @@ const generateTimestamps = (startTime, intervalMinutes, points) => {
     return timestamps;
 };
 
+// Fungsi memuat data historis
 const loadHistoricalData = () => {
     try {
         const savedData = localStorage.getItem(STORAGE_KEY);
@@ -40,8 +42,10 @@ const loadHistoricalData = () => {
     };
 };
 
-export const ServerContext = createContext(undefined);
+// Membuat context dengan nilai awal yang aman
+const ServerContext = createContext(undefined);
 
+// Komponen Provider
 export const ServerProvider = ({ children }) => {
     const [serverData, setServerData] = useState({
         server_status_list: [],
@@ -65,11 +69,11 @@ export const ServerProvider = ({ children }) => {
             const unaccessibleCount = data.server_status_list.filter(server => server.status === 'unaccessible').length;
             const newTime = new Date(data.timestamp).toLocaleTimeString();
 
-            setHistoricalData(() => ({
-                activeServers: activeCount,
-                timeoutServers: timeoutCount,
-                unaccessibleServers: unaccessibleCount,
-                timestamps: newTime,
+            setHistoricalData(prev => ({
+                activeServers: [...prev.activeServers.slice(1), activeCount],
+                timeoutServers: [...prev.timeoutServers.slice(1), timeoutCount],
+                unaccessibleServers: [...prev.unaccessibleServers.slice(1), unaccessibleCount],
+                timestamps: [...prev.timestamps.slice(1), newTime],
                 lastUpdate: now
             }));
             lastUpdateRef.current = now;
@@ -143,4 +147,13 @@ export const ServerProvider = ({ children }) => {
             {children}
         </ServerContext.Provider>
     );
+};
+
+// Hook kustom
+export const useServerData = () => {
+    const context = useContext(ServerContext);
+    if (context === undefined) {
+        throw new Error('useServerData must be used within a ServerProvider');
+    }
+    return context;
 };

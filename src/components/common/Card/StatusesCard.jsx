@@ -1,6 +1,6 @@
 import React from "react";
 import StatusCard from "./StatusCard";
-import { useServerData } from '../../context/ServerContext';
+import { useServerData } from "../../../hooks/useServerData";
 
 export default function StatusesCard() {
     const { serverData, historicalData } = useServerData();
